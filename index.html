@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مطعم الحوت | القائمة الرقمية</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-container" id="logo-render">
+                    <h1>مطعم الحوت 🐋</h1>
+                </div>
+                <p id="restaurant-address">جارِ التحميل...</p>
+            </div>
+            <div class="header-buttons">
+                <button id="theme-toggle" class="btn btn-primary"
+                    style="background:#444; color:white; width:45px; padding:12px 0;">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <a href="#" id="whatsapp-btn" class="btn btn-whatsapp" target="_blank">
+                    <i class="fab fa-whatsapp"></i> اطلب الآن
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Daily Dish Section -->
+        <section id="daily-dish-container"></section>
+
+        <!-- Search and Controls -->
+        <section class="controls">
+            <div class="search-box">
+                <i class="fas fa-search"
+                    style="position:absolute; left:20px; top:18px; color:var(--text-secondary);"></i>
+                <input type="text" id="menu-search" placeholder="ابحث عن طعام، مشروب، أو أركيلة...">
+            </div>
+            <div id="category-filters" class="category-filters">
+                <!-- Categories will be injected here -->
+                <button class="filter-btn active" data-category="all">الكل</button>
+            </div>
+        </section>
+
+        <!-- Menu Content -->
+        <section id="menu-container">
+            <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i> جارِ تجهيز أشهى المأكولات...
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-info">
+            <div class="footer-item">
+                <h3><i class="fas fa-phone"></i> اتصل بنا</h3>
+                <p id="restaurant-phone">---</p>
+            </div>
+            <div class="footer-item">
+                <h3><i class="fas fa-clock"></i> أوقات العمل</h3>
+                <p id="restaurant-hours">---</p>
+            </div>
+            <div class="footer-item">
+                <h3><i class="fas fa-map-marker-alt"></i> العنوان</h3>
+                <p id="restaurant-address-footer">---</p>
+            </div>
+        </div>
+        <p>© 2026 مطعم الحوت - جميع الحقوق محفوظة</p>
+    </footer>
+
+    <a href="admin.html" class="admin-floating-btn" title="لوحة الإدارة">
+        <i class="fas fa-user-shield"></i>
+    </a>
+
+    <!-- Scripts -->
+    <script src="data.js?v=9"></script>
+    <script src="voice-waiter.js"></script>
+    <script>
+        // Main Logic for index.html
+        document.addEventListener('DOMContentLoaded', async () => {
+            const data = await RestaurantData.getData();
+            renderHeader(data.info);
+            renderFilters(data.categories);
+            renderMenu(data.categories, data.items);
+
+            // Theme Toggle
+            const themeBtn = document.getElementById('theme-toggle');
+            const icon = themeBtn.querySelector('i');
+
+            // Check saved theme
+            if (localStorage.getItem('theme') === 'light') {
+                document.body.classList.add('light-mode');
+                icon.className = 'fas fa-sun';
+            }
+
+            themeBtn.onclick = () => {
+                document.body.classList.toggle('light-mode');
+                const isLight = document.body.classList.contains('light-mode');
+                icon.className = isLight ? 'fas fa-sun' : 'fas fa-moon';
+                localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            };
+
+            // Search functionality
+            document.getElementById('menu-search').addEventListener('input', async (e) => {
+                const term = e.target.value.toLowerCase();
+                await filterMenu(term, 'all');
+            });
+        });
+
+        function renderHeader(info) {
+            document.getElementById('restaurant-address').innerText = info.address;
+            document.getElementById('restaurant-phone').innerText = info.phone;
+            document.getElementById('restaurant-hours').innerText = info.openHours;
+            document.getElementById('restaurant-address-footer').innerText = info.address;
+            document.getElementById('whatsapp-btn').href = `https://wa.me/${info.phone.replace(/\s/g, '')}`;
+
+            // Render Logo
+            const logoRender = document.getElementById('logo-render');
+            let logoHtml = '';
+            if (info.logo && info.logo.image) {
+                logoHtml += `<img src="${info.logo.image}" class="logo-img" alt="Logo">`;
+            }
+            // Use info.logo.text if provided, otherwise fallback to info.name or default
+            const displayName = (info.logo && info.logo.text) ? info.logo.text : (info.name || 'مطعم الحوت 🐋');
+            logoHtml += `<h1>${displayName}</h1>`;
+            logoRender.innerHTML = logoHtml;
+
+            // Render Daily Dish
+            const ddContainer = document.getElementById('daily-dish-container');
+            if (info.dailyDish && info.dailyDish.active) {
+                let mediaHtml = '';
+                if (info.dailyDish.video) {
+                    mediaHtml = `<video src="${info.dailyDish.video}" autoplay muted loop playsinline></video>`;
+                } else if (info.dailyDish.image) {
+                    mediaHtml = `<img src="${info.dailyDish.image}" alt="${info.dailyDish.title}">`;
+                }
+
+                ddContainer.innerHTML = `
+                    <div class="daily-dish">
+                        <div class="daily-dish-content">
+                            <div class="daily-dish-media">
+                                ${mediaHtml || '<i class="fas fa-utensils fa-5x" style="opacity:0.1; display:flex; justify-content:center; padding:50px;"></i>'}
+                            </div>
+                            <div class="daily-dish-info">
+                                <h2>${info.dailyDish.title}</h2>
+                                <p>${info.dailyDish.text}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                ddContainer.innerHTML = '';
+            }
+        }
+
+        function renderFilters(categories) {
+            const container = document.getElementById('category-filters');
+            categories.sort((a, b) => a.order - b.order).forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn';
+                btn.innerText = cat.name;
+                btn.dataset.category = cat.id;
+                btn.onclick = async () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    await filterMenu('', cat.id);
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function renderMenu(categories, items, filterCat = 'all', searchTerm = '') {
+            const container = document.getElementById('menu-container');
+            container.innerHTML = '';
+
+            const filteredCategories = filterCat === 'all'
+                ? categories
+                : categories.filter(c => c.id === filterCat);
+
+            let hasResults = false;
+
+            filteredCategories.sort((a, b) => a.order - b.order).forEach(cat => {
+                const catItems = items.filter(item =>
+                    item.categoryId === cat.id &&
+                    (item.name.toLowerCase().includes(searchTerm) || cat.name.toLowerCase().includes(searchTerm))
+                );
+
+                if (catItems.length > 0) {
+                    hasResults = true;
+                    const section = document.createElement('section');
+                    section.className = 'menu-section';
+                    section.innerHTML = `
+                        <div class="category-header" style="display:flex; align-items:center; gap:15px; margin-bottom:20px; border-bottom:2px solid var(--primary); padding-bottom:10px;">
+                            ${cat.image ? `<img src="${cat.image}" style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid var(--primary);">` : ''}
+                            <h2 class="category-title" style="margin:0; border:none; padding:0;">${cat.name}</h2>
+                        </div>
+                    `;
+
+                    const grid = document.createElement('div');
+                    grid.className = 'menu-grid';
+
+                    catItems.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = 'menu-item';
+                        card.innerHTML = `
+                            <div class="item-image">
+                                ${item.image ? `<img src="${item.image}" alt="${item.name}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">` : `<i class="fas fa-utensils"></i>`}
+                            </div>
+                            <div class="item-name">${item.name}</div>
+                            ${item.description ? `<div class="item-description" style="font-size:12px; color:var(--text-secondary); margin:5px 0;">${item.description}</div>` : ''}
+                            <div class="item-price">${item.price} $</div>
+                        `;
+                        grid.appendChild(card);
+                    });
+
+                    section.appendChild(grid);
+                    container.appendChild(section);
+                }
+            });
+
+            if (!hasResults) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search-minus fa-3x" style="margin-bottom:20px; color:var(--text-secondary);"></i>
+                        <h2>عذراً، لم نجد ما تبحث عنه</h2>
+                        <p>جرب كلمات بحث أخرى أو اختر فئة مختلفة</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function filterMenu(term, catId) {
+            const data = await RestaurantData.getData();
+            renderMenu(data.categories, data.items, catId, term);
+        }
+    </script>
+
+</body>
+
+</html>

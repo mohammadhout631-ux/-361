@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم | مطعم الحوت</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .admin-sidebar {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 15px;
+            grid-column: span 3;
+            height: fit-content;
+        }
+
+        .admin-content {
+            grid-column: span 9;
+        }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .tab-link {
+            display: block;
+            padding: 15px;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            transition: 0.3s;
+        }
+
+        .tab-link:hover,
+        .tab-link.active {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .admin-card {
+            background: var(--bg-card);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            background: #0a0a0a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: white;
+        }
+
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            /* BYPASS: Hidden for emergency access */
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .login-box {
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid var(--primary);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 15px;
+            text-align: right;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table th {
+            color: var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-box">
+            <i class="fas fa-lock fa-3x" style="color:var(--primary); margin-bottom:20px;"></i>
+            <h2>دخول المدير</h2>
+            <div class="form-group" style="margin-top:20px;">
+                <input type="password" id="admin-pass" placeholder="أدخل كلمة السر (الافتراضية 1234)">
+            </div>
+            <button onclick="Admin.login()" class="btn btn-primary" style="width:100%;">دخول</button>
+            <p style="margin-top:15px;"><a href="index.html" style="color:var(--text-secondary);">العودة للموقع</a></p>
+        </div>
+    </div>
+
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <h1>لوحة التحكم ⚙️</h1>
+                <p>إدارة مطعم الحوت</p>
+            </div>
+            <div class="header-buttons">
+                <a href="index.html" class="btn btn-primary">
+                    <i class="fas fa-eye"></i> عرض الموقع
+                </a>
+                <button onclick="Admin.logout()" class="btn btn-whatsapp" style="background:var(--danger);">
+                    <i class="fas fa-sign-out-alt"></i> خروج
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="admin-grid">
+            <div class="admin-sidebar">
+                <a href="#" class="tab-link active" onclick="Admin.showTab('info', event)">
+                    <i class="fas fa-info-circle"></i> معلومات المطعم
+                </a>
+                <a href="#" class="tab-link" onclick="Admin.showTab('categories', event)">
+                    <i class="fas fa-list"></i> الأقسام
+                </a>
+                <a href="#" class="tab-link" onclick="Admin.showTab('items', event)">
+                    <i class="fas fa-utensils"></i> الأصناف والأسعار
+                </a>
+                <a href="#" class="tab-link" onclick="Admin.showTab('backup', event)">
+                    <i class="fas fa-database"></i> النسخ الاحتياطي
+                </a>
+            </div>
+
+            <div class="admin-content">
+                <!-- Restaurant Info -->
+                <div id="tab-info" class="tab-content">
+                    <div class="admin-card">
+                        <h2><i class="fas fa-id-card"></i> البيانات الأساسية</h2>
+                        <div style="margin-top:20px;">
+                            <div class="form-group">
+                                <label>اسم المطعم</label>
+                                <input type="text" id="info-name">
+                            </div>
+                            <div class="form-group">
+                                <label>رقم الهاتف / واتساب</label>
+                                <input type="text" id="info-phone">
+                            </div>
+                            <div class="form-group">
+                                <label>العنوان</label>
+                                <input type="text" id="info-address">
+                            </div>
+                            <div class="form-group">
+                                <label>ساعات العمل</label>
+                                <input type="text" id="info-hours">
+                            </div>
+                            <hr style="border:0; border-top:1px solid var(--border); margin:20px 0;">
+                            <h3><i class="fas fa-image"></i> اللوغو (Logo)</h3>
+                            <div style="display:flex; gap:20px; align-items:center; margin-top:15px;">
+                                <div id="logo-preview"
+                                    style="width:80px; height:80px; border:1px dashed var(--border); border-radius:10px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                                    <i class="fas fa-image fa-2x" style="opacity:0.2;"></i>
+                                </div>
+                                <div style="flex:1;">
+                                    <div class="form-group">
+                                        <label>نص اللوغو (في حال عدم وجود صورة)</label>
+                                        <input type="text" id="logo-text">
+                                    </div>
+                                    <button onclick="Admin.editLogo()" class="btn btn-whatsapp"
+                                        style="padding:8px 15px; font-size:14px;"><i class="fas fa-upload"></i> رفع صورة
+                                        اللوغو</button>
+                                    <button onclick="Admin.removeLogo()" class="btn"
+                                        style="background:var(--danger); padding:8px 15px; font-size:14px;"><i
+                                            class="fas fa-trash"></i> حذف الصورة</button>
+                                </div>
+                            </div>
+                            <hr style="border:0; border-top:1px solid var(--border); margin:20px 0;">
+                            <h3><i class="fas fa-star"></i> طبق اليوم (Daily Dish)</h3>
+                            <div style="margin-top:15px;">
+                                <div class="form-group">
+                                    <label style="display:flex; align-items:center; gap:10px;">
+                                        <input type="checkbox" id="dd-active" style="width:auto;"> تفعيل قسم طبق اليوم
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label>عنوان الطبق</label>
+                                    <input type="text" id="dd-title">
+                                </div>
+                                <div class="form-group">
+                                    <label>وصف الطبق</label>
+                                    <textarea id="dd-text" rows="3"
+                                        style="width:100%; background:#0a0a0a; color:white; border:1px solid var(--border); border-radius:8px; padding:12px;"></textarea>
+                                </div>
+                                <div style="display:flex; gap:10px;">
+                                    <button onclick="Admin.editDailyDishMedia('image')" class="btn btn-whatsapp"><i
+                                            class="fas fa-image"></i> رفع صورة</button>
+                                    <button onclick="Admin.editDailyDishMedia('video')" class="btn btn-primary"><i
+                                            class="fas fa-video"></i> رفع فيديو</button>
+                                    <button onclick="Admin.removeDailyDishMedia()" class="btn"
+                                        style="background:var(--danger);"><i class="fas fa-trash"></i> حذف
+                                        الميديا</button>
+                                </div>
+                            </div>
+                            <button onclick="Admin.saveInfo()" class="btn btn-primary"
+                                style="margin-top:30px; width:100%; font-size:1.1rem; padding:15px;">حفظ كافة
+                                البيانات</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categories -->
+                <div id="tab-categories" class="tab-content" style="display:none;">
+                    <div class="admin-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h2><i class="fas fa-folder-plus"></i> إدارة الأقسام</h2>
+                            <button onclick="Admin.addCategory()" class="btn btn-primary"><i class="fas fa-plus"></i>
+                                قسم جديد</button>
+                        </div>
+                        <div style="margin-top:20px;">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>الترتيب</th>
+                                        <th>الصورة</th>
+                                        <th>اسم القسم</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="categories-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Items -->
+                <div id="tab-items" class="tab-content" style="display:none;">
+                    <div class="admin-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h2><i class="fas fa-bowl-food"></i> إدارة المنيو</h2>
+                            <button onclick="Admin.addItem()" class="btn btn-primary"><i class="fas fa-plus"></i> صنف
+                                جديد</button>
+                        </div>
+                        <div style="margin-top:20px;">
+                            <div class="form-group">
+                                <label>تصفية حسب القسم</label>
+                                <select id="item-cat-filter" onchange="Admin.renderItemsList()">
+                                    <option value="all">الكل</option>
+                                </select>
+                            </div>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>الصورة</th>
+                                        <th>الاسم</th>
+                                        <th>الوصف</th>
+                                        <th>السعر</th>
+                                        <th>القسم</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="items-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Backup & Settings -->
+                <div id="tab-backup" class="tab-content" style="display:none;">
+
+                    <div class="admin-card">
+                        <h2><i class="fas fa-robot"></i> إعدادات النادل الصوتي</h2>
+                        <div class="form-group" style="margin-top:15px;">
+                            <label>اسم النادل (يظهر للزبون)</label>
+                            <input type="text" id="waiter-name-input" placeholder="مثال: نادل مطعم الحوت">
+                        </div>
+                        <button onclick="Admin.saveWaiterName()" class="btn btn-whatsapp" style="width:100%;">حفظ اسم
+                            النادل</button>
+                    </div>
+
+                    <div class="admin-card">
+                        <h2><i class="fas fa-key"></i> تغيير كلمة السر</h2>
+                        <div class="form-group" style="margin-top:15px;">
+                            <label>كلمة السر الجديدة</label>
+                            <input type="text" id="new-password" placeholder="أدخل كلمة السر الجديدة">
+                        </div>
+                        <button onclick="Admin.changePassword()" class="btn btn-primary">تحديث كلمة السر</button>
+                    </div>
+
+                    <!-- Enhanced Netlify Export Section -->
+                    <div class="admin-card"
+                        style="border: 2px solid #00d1b2; background: linear-gradient(135deg, rgba(0,209,178,0.05) 0%, rgba(0,0,0,0) 100%);">
+                        <div style="display:flex; align-items:center; gap:15px; margin-bottom:20px;">
+                            <i class="fas fa-cloud-upload-alt" style="font-size:2.5rem; color:#00d1b2;"></i>
+                            <div>
+                                <h2 style="margin:0;"><i class="fas fa-sync-alt"></i> تحديث الموقع على Netlify</h2>
+                                <p style="margin:5px 0 0 0; color:var(--text-secondary); font-size:14px;">اتبع هذه
+                                    الخطوات لرفع التعديلات إلى موقعك المباشر</p>
+                            </div>
+                        </div>
+
+                        <!-- Warning Box -->
+                        <div
+                            style="background:#ff6b6b; color:white; padding:15px; border-radius:10px; margin-bottom:20px; border-right:5px solid #ff0000;">
+                            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                                <i class="fas fa-exclamation-triangle" style="font-size:1.3rem;"></i>
+                                <strong style="font-size:1.1rem;">مهم جداً!</strong>
+                            </div>
+                            <p style="margin:0; font-size:14px; line-height:1.6;">
+                                أي تعديل تقوم به (إضافة صنف، تغيير سعر، تحديث صورة) <strong>لن يظهر على الموقع
+                                    المباشر</strong> إلا بعد اتباع الخطوات أدناه!
+                            </p>
+                        </div>
+
+                        <!-- Step-by-Step Instructions -->
+                        <div
+                            style="background:rgba(0,209,178,0.1); padding:20px; border-radius:10px; margin-bottom:20px;">
+                            <h3 style="margin:0 0 15px 0; color:#00d1b2;"><i class="fas fa-list-ol"></i> الخطوات
+                                المطلوبة:</h3>
+
+                            <div style="display:flex; gap:15px; margin-bottom:15px; align-items:start;">
+                                <div
+                                    style="background:#00d1b2; color:#000; width:35px; height:35px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; flex-shrink:0;">
+                                    1</div>
+                                <div style="flex:1;">
+                                    <strong style="color:#00d1b2; font-size:1.05rem;">اضغط على الزر الأخضر
+                                        أدناه</strong>
+                                    <p style="margin:5px 0 0 0; color:var(--text-secondary); font-size:13px;">سيتم تنزيل
+                                        ملف <code
+                                            style="background:#000; padding:2px 6px; border-radius:3px; color:#00d1b2;">data.js</code>
+                                        جديد يحتوي على كل تعديلاتك</p>
+                                </div>
+                            </div>
+
+                            <div style="display:flex; gap:15px; margin-bottom:15px; align-items:start;">
+                                <div
+                                    style="background:#00d1b2; color:#000; width:35px; height:35px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; flex-shrink:0;">
+                                    2</div>
+                                <div style="flex:1;">
+                                    <strong style="color:#00d1b2; font-size:1.05rem;">استبدل الملف القديم</strong>
+                                    <p style="margin:5px 0 0 0; color:var(--text-secondary); font-size:13px;">اذهب لمجلد
+                                        <code
+                                            style="background:#000; padding:2px 6px; border-radius:3px;">Ready_For_Netlify</code>
+                                        واحذف <code
+                                            style="background:#000; padding:2px 6px; border-radius:3px; color:#ff6b6b;">data.js</code>
+                                        القديم وضع الجديد مكانه</p>
+                                </div>
+                            </div>
+
+                            <div style="display:flex; gap:15px; align-items:start;">
+                                <div
+                                    style="background:#00d1b2; color:#000; width:35px; height:35px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; flex-shrink:0;">
+                                    3</div>
+                                <div style="flex:1;">
+                                    <strong style="color:#00d1b2; font-size:1.05rem;">ارفع المجلد إلى Netlify</strong>
+                                    <p style="margin:5px 0 0 0; color:var(--text-secondary); font-size:13px;">ارفع
+                                        محتويات مجلد <code
+                                            style="background:#000; padding:2px 6px; border-radius:3px;">Ready_For_Netlify</code>
+                                        إلى موقعك على Netlify</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Main Export Button -->
+                        <button onclick="Admin.exportForNetlify()" class="btn"
+                            style="background:#00d1b2; color:white; width:100%; padding:20px; font-weight:bold; font-size:1.2rem; box-shadow: 0 4px 15px rgba(0,209,178,0.4); transition: all 0.3s;">
+                            <i class="fas fa-cloud-upload-alt" style="font-size:1.5rem;"></i> تصدير من أجل Netlify
+                        </button>
+
+                        <p style="font-size:12px; color:var(--text-secondary); margin-top:10px; text-align:center;">
+                            <i class="fas fa-info-circle"></i> بعد الضغط، سيتم تنزيل ملف <strong>data.js</strong> جديد
+                            في مجلد التنزيلات
+                        </p>
+                    </div>
+
+                    <!-- Backup Section -->
+                    <div class="admin-card">
+                        <h2><i class="fas fa-save"></i> النسخ الاحتياطي</h2>
+                        <p style="margin:15px 0;">احفظ نسخة احتياطية من بياناتك لاستعادتها لاحقاً في حال حدوث أي مشكلة.
+                        </p>
+                        <div style="display:flex; gap:10px;">
+                            <button onclick="Admin.exportData()" class="btn btn-primary" style="flex:1;">
+                                <i class="fas fa-download"></i> تصدير نسخة احتياطية
+                            </button>
+                            <button onclick="document.getElementById('import-file').click()" class="btn btn-whatsapp"
+                                style="flex:1;">
+                                <i class="fas fa-upload"></i> استيراد من ملف
+                            </button>
+                            <input type="file" id="import-file" style="display:none;" onchange="Admin.importData(this)">
+                        </div>
+                        <p style="font-size:12px; color:var(--text-secondary); margin-top:10px;">
+                            <i class="fas fa-lightbulb"></i> <strong>نصيحة:</strong> قم بحفظ نسخة احتياطية بشكل دوري
+                            لحماية بياناتك
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <input type="file" id="item-image-input" style="display:none;" accept="image/*">
+    <input type="file" id="category-image-input" style="display:none;" accept="image/*">
+    <input type="file" id="logo-upload-input" style="display:none;" accept="image/*">
+    <input type="file" id="dd-media-input" style="display:none;">
+    <script src="data.js"></script>
+    <script src="admin.js"></script>
+</body>
+
+</html>
